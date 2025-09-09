@@ -1,47 +1,25 @@
-import { buildRoadmapAgent } from "./agents/roadmapGraph";
-import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { ConversationAgent } from "./agents/conversationAgent";
+import readline from "readline";
 
-// Get the directory name in ES module
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Setup CLI
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
 
-// Load .env from the root directory
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+const ask = (question: string): Promise<string> =>
+  new Promise(resolve => rl.question(question, resolve));
 
-const agent = buildRoadmapAgent();
-
+// Run the chatbot loop
 const run = async () => {
-    try {
-        // Initialize the agent with a topic
-        const initialState = await agent.initialize('AI Agent Development');
-        
-        console.log('🚀 Initialized roadmap:');
-        console.log(`📌 Topic: ${initialState.topic}`);
-        console.log(`📊 Total Steps: ${initialState.totalSteps}`);
-        
-        // Display first module
-        console.log('\n🧠 Current Module:');
-        console.log(initialState.currentModule);
-        
-        // Show progress
-        const progress = agent.getProgress(initialState);
-        console.log(`\n📈 Progress: ${progress.current}/${progress.total} (${progress.percentage}%)`);
-        
-        // Example: Move to next module
-        const nextState = agent.next(initialState);
-        if (!nextState.isComplete) {
-            console.log('\n➡️ Next Module:');
-            console.log(nextState.currentModule);
-            
-            const newProgress = agent.getProgress(nextState);
-            console.log(`\n📈 New Progress: ${newProgress.current}/${newProgress.total} (${newProgress.percentage}%)`);
-        }
-        
-    } catch (error) {
-        console.error('❌ Error:', error);
-    }
+  const agent = new ConversationAgent();
+  console.log("🤖 Welcome! I’ll guide you through a custom learning path.");
+
+  while (true) {
+    const userInput = await ask("👤 You: ");
+    const response = await agent.process(userInput);
+    console.log(`🤖 ${response}`);
+  }
 };
 
 run();
