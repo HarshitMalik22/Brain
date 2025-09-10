@@ -22,13 +22,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  console.log('🔍 [DEBUG] RootLayout rendering');
-  
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        suppressHydrationWarning
       >
         {children}
       </body>

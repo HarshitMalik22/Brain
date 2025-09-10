@@ -1,7 +1,14 @@
 import { ChatGroq } from "@langchain/groq";
 import { HumanMessage } from "@langchain/core/messages";
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+// Get the directory name in ES module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// Environment variables should be loaded by Next.js automatically
+// Load .env from the root directory
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 // Step-by-step interactive onboarding like Leeco
 const STEPS = [
   "Hi! I can help you master any topic by building a personalized learning path. What do you want to learn?",
@@ -35,17 +42,12 @@ export class ConversationAgent {
   private llm: ChatGroq;
 
   constructor() {
-    console.log('🔍 [DEBUG] ConversationAgent constructor called');
-    console.log('🔍 [DEBUG] GROQ_API_KEY available:', !!process.env.NEXT_PUBLIC_GROQ_API_KEY || !!process.env.GROQ_API_KEY);
-    
     this.context = { step: 0 };
     this.llm = new ChatGroq({
       model: "llama-3.1-8b-instant",
       temperature: 0.7,
-      apiKey: process.env.NEXT_PUBLIC_GROQ_API_KEY || process.env.GROQ_API_KEY
+      apiKey: process.env.GROQ_API_KEY
     });
-    
-    console.log('🔍 [DEBUG] ConversationAgent initialized successfully');
   }
 
   // Check if all intake questions are answered
@@ -101,12 +103,8 @@ End with a motivational message and say: “Type 'start over' to generate a new 
 
   // Main handler for each user message
   public async process(input: string): Promise<string> {
-    console.log('🔍 [DEBUG] ConversationAgent.process called with input:', input);
-    console.log('🔍 [DEBUG] Current phase:', this.phase);
-    console.log('🔍 [DEBUG] Current step:', this.context.step);
-    
+    // Restart the assistant from scratch
     if (input.toLowerCase().includes("start over")) {
-      console.log('🔍 [DEBUG] Starting over');
       this.context = { step: 0 };
       this.phase = "collecting";
       return this.getNextQuestion()!;
@@ -118,10 +116,9 @@ End with a motivational message and say: “Type 'start over' to generate a new 
       if (this.isComplete()) {
         const prompt = this.buildPrompt();
         const res = await this.llm.invoke([new HumanMessage(prompt)]);
-        const content = typeof res.content === 'string' ? res.content : String(res.content);
-        this.roadmap = content;
+        this.roadmap = res.content;
         this.phase = "follow_up";
-        return content + "\n\n💡 You can now ask me questions about this plan.";
+        return res.content + "\n\n💡 You can now ask me questions about this plan.";
       }
       return this.getNextQuestion()!;
     }
@@ -139,7 +136,7 @@ If unclear, ask for clarification.
 `.trim();
 
       const res = await this.llm.invoke([new HumanMessage(followupPrompt)]);
-      return typeof res.content === 'string' ? res.content : String(res.content);
+      return res.content;
     }
 
     return "🤖 Unexpected state.";
