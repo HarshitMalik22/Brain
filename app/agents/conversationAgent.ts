@@ -141,4 +141,50 @@ If unclear, ask for clarification.
 
     return "🤖 Unexpected state.";
   }
+
+  // =============================================================================
+  // CONTEXT MANAGEMENT METHODS
+  // =============================================================================
+  // These methods are ESSENTIAL for conversation continuity across HTTP requests
+  // Without these, the AI won't remember previous conversations!
+  // =============================================================================
+
+  /**
+   * Get the current conversation context
+   * Returns a copy to prevent external modification of internal state
+   */
+  public getContext(): ChatContext {
+    // Return a deep copy of the context
+    // Why copy? To prevent external modification of internal state
+    return { ...this.context };
+  }
+
+  /**
+   * Restore the agent's state from saved context
+   * This is CRITICAL for continuing conversations across HTTP requests
+   */
+  public setContext(context: ChatContext): void {
+    // Restore the agent's state from saved context
+    this.context = context;
+    
+    // Restore the correct phase based on context completeness
+    // This ensures the agent knows whether to ask questions or follow up
+    this.phase = this.isComplete() ? "follow_up" : "collecting";
+  }
+
+  /**
+   * Get the generated learning roadmap
+   * Returns the roadmap string that was generated after onboarding
+   */
+  public getRoadmap(): string {
+    return this.roadmap;
+  }
+
+  /**
+   * Set the learning roadmap
+   * Used when restoring a conversation that already has a generated roadmap
+   */
+  public setRoadmap(roadmap: string): void {
+    this.roadmap = roadmap;
+  }
 }
