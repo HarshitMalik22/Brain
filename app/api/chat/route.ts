@@ -1,31 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ConversationAgent, ChatContext } from '@/app/agents/conversationAgent';
-
-// Define TypeScript interfaces for better type safety
-interface ChatMessage {
-  text: string;
-  isUser: boolean;
-  timestamp: number;
-}
-
-interface ChatSession {
-  id: string;
-  messages: ChatMessage[];
-  context: ChatContext;
-  createdAt: number;
-  updatedAt: number;
-}
-
-// =============================================================================
-// IN-MEMORY CHAT STORAGE
-// =============================================================================
-// Why use a Map? Maps provide O(1) time complexity for get/set operations
-// and are more efficient than plain objects for this use case.
-// 
-// IMPORTANT: This is a development-only solution! Data will be lost on server restart.
-// For production, replace with a database (Redis, MongoDB, PostgreSQL, etc.)
-// =============================================================================
-const chatStore = new Map<string, ChatSession>();
+import { ConversationAgent } from '@/app/agents/conversationAgent';
+import { chatStore } from '@/app/lib/chatStore';
 
 // =============================================================================
 // MAIN API ENDPOINT: CREATE NEW CHAT SESSION
@@ -46,13 +21,13 @@ export async function POST(request: NextRequest) {
     // - Application crashes from malformed data
     // - Unexpected behavior from edge cases
     // =============================================================================
-    const { initialMessage } = await request.json();
+    const { message } = await request.json();
 
     // Comprehensive input validation
-    if (!initialMessage || typeof initialMessage !== 'string' || initialMessage.trim() === '') {
+    if (!message || typeof message !== 'string' || message.trim() === '') {
       return NextResponse.json(
         { 
-          error: 'Initial message is required and must be a non-empty string',
+          error: 'Message is required and must be a non-empty string',
           details: 'Please provide a valid message to start the conversation'
         },
         { status: 400 } // HTTP 400 Bad Request - client error
@@ -100,7 +75,7 @@ export async function POST(request: NextRequest) {
     // 3. AI generates a response based on the input
     // 4. Response is returned for storage and client delivery
     // =============================================================================
-    const initialResponse = await agent.process(initialMessage.trim());
+    const initialResponse = await agent.process(message.trim());
 
     // =============================================================================
     // STEP 5: CREATE CHAT SESSION DATA STRUCTURE
@@ -117,7 +92,7 @@ export async function POST(request: NextRequest) {
       id: chatId,
       messages: [
         {
-          text: initialMessage.trim(),
+          text: message.trim(),
           isUser: true,
           timestamp: Date.now() // Unix timestamp in milliseconds
         },

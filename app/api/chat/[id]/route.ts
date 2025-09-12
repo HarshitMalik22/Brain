@@ -1,21 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ConversationAgent, ChatContext } from "@/app/agents/conversationAgent";
-
-interface ChatMessage{
-    text: string;
-    isUser: boolean;
-    timestamp: number;
-}
-
-interface ChatSession{
-    id: string;
-    messages: ChatMessage[];
-    context: ChatContext;
-    createdAt: number;
-    updatedAt: number;
-}
-
-let chatStore = new Map<string, ChatSession>();
+import { ConversationAgent } from "@/app/agents/conversationAgent";
+import { chatStore } from "@/app/lib/chatStore";
 
 // =============================================================================
 // GET METHOD: RETRIEVE CHAT SESSION
@@ -28,10 +13,10 @@ let chatStore = new Map<string, ChatSession>();
 // =============================================================================
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
   ) {
     try {
-      const chatId = params.id;
+      const { id: chatId } = await params;
       
       // Retrieve chat session from storage
       const chatSession = chatStore.get(chatId);
@@ -76,10 +61,10 @@ export async function GET(
 // =============================================================================
 export async function POST(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
   ) {
     try {
-      const chatId = params.id;
+      const { id: chatId } = await params;
       const { message } = await request.json();
       
       // =============================================================================
