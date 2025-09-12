@@ -66,7 +66,6 @@ export async function POST(request: NextRequest) {
     // - Timestamp (Date.now()): Ensures uniqueness across time
     // - Random string: Prevents collisions from simultaneous requests
     // - 'chat_' prefix: Makes IDs identifiable and readable in logs
-    // 
     // Alternative approaches considered:
     // - UUID: More standard but less readable for debugging
     // - Database auto-increment: Simpler but harder to scale horizontally
